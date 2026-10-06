@@ -151,7 +151,7 @@ static const Key keys[] = {
     { MODKEY,                           XK_k,       spawn,          SHCMD("$HOME/.local/bin/kbd-backlight-cycle") },
     { MODKEY,                           XK_t,       spawn,          SHCMD("st") },
     { MODKEY|ShiftMask,                 XK_s,       spawn,          SHCMD("scrot -s '$HOME/Pictures/Screenshot_%Y-%m-%d_%H-%M-%S.png'") },
-    { MODKEY|ShiftMask,                 XK_p,       spawn,          SHCMD("bar-power") },
+    { MODKEY,                           XK_p,       spawn,          SHCMD("bar-power") },
     { MODKEY,                           XK_x,       spawn,          SHCMD("slock") },
     { MODKEY,                           XK_Return,  spawn,          SHCMD("st")},
 
