@@ -22,8 +22,8 @@
 #define ICON_VOLUME "󰕾"
 #define ICON_MUTED ""
 #define ICON_BRIGHTNESS "󰃠"
-#define ICON_WIFI "󰖩"
-#define ICON_BLUETOOTH ""
+#define ICON_WIFI ""
+#define ICON_BLUETOOTH ""
 #define ICON_CPU ""
 #define ICON_RAM "󰍛"
 #define ICON_DISK "󰋊"
@@ -470,7 +470,7 @@ refresh_ram(void)
 {
 	char *line;
 	unsigned long total = 0, available = 0;
-	double used_gib, total_gib;
+	double used_gib;
 
 	ram_text[0] = '\0';
 	if (read_fd(meminfo_fd, read_buffer, sizeof(read_buffer)) < 0)
@@ -484,9 +484,8 @@ refresh_ram(void)
 	if (!total || available > total)
 		return;
 	used_gib = (double)(total - available) / 1048576.0;
-	total_gib = (double)total / 1048576.0;
-	(void)snprintf(ram_text, sizeof(ram_text), "%s %.1fG/%.1fG",
-	               ICON_RAM, used_gib, total_gib);
+	(void)snprintf(ram_text, sizeof(ram_text), "%s %.1fG",
+	               ICON_RAM, used_gib);
 }
 
 static void
