@@ -69,3 +69,8 @@ root window name.
 In the accompanying DWM build, the final time module is drawn in the center.
 The volume and brightness modules contain invisible status markers used by
 DWM to provide module-specific mouse-wheel controls.
+
+Click the Wi-Fi module to open `nmtui` in st. Click the Bluetooth icon to open
+`bluetoothctl` in st. Wi-Fi is white while connected, grey while disconnected,
+and black while its interface is off. Battery color is green above 70%, orange
+from 30–70%, and red below 30%; charging adds a bolt.

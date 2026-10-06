@@ -34,6 +34,8 @@ static const char *downvol[] = { "/bin/sh", "-c", "wpctl set-volume @DEFAULT_AUD
 static const char *mutevol[] = { "/bin/sh", "-c", "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; pkill -RTMIN+1 dwmstatus", NULL };
 static const char *light_up[] = { "/bin/sh", "-c", "xbacklight -inc 5; pkill -RTMIN+2 dwmstatus", NULL };
 static const char *light_down[] = { "/bin/sh", "-c", "xbacklight -dec 5; pkill -RTMIN+2 dwmstatus", NULL };
+static const char *wifi_menu[] = { "st", "-e", "nmtui", NULL };
+static const char *bluetooth_menu[] = { "st", "-e", "bluetoothctl", NULL };
 static const int new_window_attach_on_end = 0; /*  1 means the new window will attach on the end; 0 means the new window will attach on the front,default is front */
 #define ICONSIZE 19   /* icon size */
 #define ICONSPACING 8 /* space between icon and title */
@@ -260,6 +262,8 @@ static const Button buttons[] = {
     { ClkStatusVolume,      0,              Button5,        spawn,          {.v = downvol} },
     { ClkStatusBrightness,  0,              Button4,        spawn,          {.v = light_up} },
     { ClkStatusBrightness,  0,              Button5,        spawn,          {.v = light_down} },
+    { ClkStatusWifi,        0,              Button1,        spawn,          {.v = wifi_menu} },
+    { ClkStatusBluetooth,   0,              Button1,        spawn,          {.v = bluetooth_menu} },
 
     /* Keep movemouse? */
     /* { ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} }, */

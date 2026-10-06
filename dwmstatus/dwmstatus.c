@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <net/if.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -18,17 +19,23 @@
 
 /* Appearance: change these without touching module code. */
 #define SEPARATOR " | "
-#define ICON_VOLUME "󰕾"
-#define ICON_MUTED "󰝟"
+#define ICON_VOLUME "🔊"
+#define ICON_MUTED "🔇"
 #define ICON_BRIGHTNESS "󰃠"
-#define ICON_WIFI "󰖩"
+#define ICON_WIFI "📶"
+#define ICON_BLUETOOTH ""
 #define ICON_CPU ""
 #define ICON_RAM "󰍛"
 #define ICON_DISK "󰋊"
-#define ICON_BAT_CHARGING "󰂄"
-#define ICON_BAT_DISCHARGING "󰁹"
-#define ICON_BAT_OTHER "󰂑"
+#define ICON_BATTERY "🔋"
+#define ICON_CHARGING "⚡"
 #define ICON_TIME "󰥔"
+#define COLOR_WHITE "#ffffff"
+#define COLOR_GREY "#777777"
+#define COLOR_BLACK "#000000"
+#define COLOR_GREEN "#00cc66"
+#define COLOR_ORANGE "#ff9900"
+#define COLOR_RED "#ff3333"
 
 #define STATUS_SIZE 256
 #define MODULE_SIZE 64
@@ -60,6 +67,7 @@ static int max_brightness_fd = -1;
 static int battery_capacity_fd = -1;
 static int battery_status_fd = -1;
 static int wifi_state_fd = -1;
+static int wifi_flags_fd = -1;
 
 static char wifi_interface[32];
 static char command_output[COMMAND_SIZE];
@@ -70,6 +78,7 @@ static char command[128];
 static char volume_text[MODULE_SIZE];
 static char brightness_text[MODULE_SIZE];
 static char wifi_text[MODULE_SIZE];
+static char bluetooth_text[MODULE_SIZE];
 static char cpu_text[MODULE_SIZE];
 static char ram_text[MODULE_SIZE];
 static char disk_text[MODULE_SIZE];
@@ -112,6 +121,23 @@ read_long_fd(int fd, long *value)
 		return -1;
 	errno = 0;
 	parsed = strtol(buffer, &end, 10);
+	if (errno != 0 || end == buffer)
+		return -1;
+	*value = parsed;
+	return 0;
+}
+
+static int
+read_hex_fd(int fd, unsigned long *value)
+{
+	char buffer[32];
+	char *end;
+	unsigned long parsed;
+
+	if (read_fd(fd, buffer, sizeof(buffer)) < 0)
+		return -1;
+	errno = 0;
+	parsed = strtoul(buffer, &end, 0);
 	if (errno != 0 || end == buffer)
 		return -1;
 	*value = parsed;
@@ -271,6 +297,29 @@ discover_wifi(void)
 	(void)snprintf(path, sizeof(path), "/sys/class/net/%s/operstate",
 	               wifi_interface);
 	wifi_state_fd = open(path, O_RDONLY | O_CLOEXEC);
+	(void)snprintf(path, sizeof(path), "/sys/class/net/%s/flags",
+	               wifi_interface);
+	wifi_flags_fd = open(path, O_RDONLY | O_CLOEXEC);
+}
+
+static void
+discover_bluetooth(void)
+{
+	DIR *dir;
+	struct dirent *entry;
+
+	bluetooth_text[0] = '\0';
+	dir = opendir("/sys/class/bluetooth");
+	if (!dir)
+		return;
+	while ((entry = readdir(dir))) {
+		if (strncmp(entry->d_name, "hci", 3) == 0) {
+			(void)snprintf(bluetooth_text, sizeof(bluetooth_text),
+			               "^c%s^%s^d^", COLOR_WHITE, ICON_BLUETOOTH);
+			break;
+		}
+	}
+	closedir(dir);
 }
 
 static void
@@ -352,13 +401,16 @@ refresh_wifi(void)
 	char *line, *colon, *ssid, *end;
 	double quality = -1.0;
 	long percent;
+	unsigned long flags;
 	const char *output;
 
 	wifi_text[0] = '\0';
-	if (!wifi_interface[0] || read_fd(wifi_state_fd, state, sizeof(state)) < 0)
+	if (!wifi_interface[0] || read_fd(wifi_state_fd, state, sizeof(state)) < 0 ||
+	    read_hex_fd(wifi_flags_fd, &flags) < 0)
 		return;
-	if (strncmp(state, "up", 2) != 0) {
-		(void)snprintf(wifi_text, sizeof(wifi_text), "%s offline", ICON_WIFI);
+	if (!(flags & IFF_UP)) {
+		(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s off^d^",
+		               COLOR_BLACK, ICON_WIFI);
 		return;
 	}
 	if (read_fd(wireless_fd, read_buffer, sizeof(read_buffer)) >= 0) {
@@ -370,7 +422,8 @@ refresh_wifi(void)
 	               wifi_interface);
 	output = run_command(command);
 	if (!output || strstr(output, "Not connected")) {
-		(void)snprintf(wifi_text, sizeof(wifi_text), "%s offline", ICON_WIFI);
+		(void)snprintf(wifi_text, sizeof(wifi_text),
+		               "^c%s^%s not connected^d^", COLOR_GREY, ICON_WIFI);
 		return;
 	}
 	ssid = strstr(command_output, "SSID: ");
@@ -383,8 +436,8 @@ refresh_wifi(void)
 	percent = quality < 0.0 ? 0 : (long)(quality * 100.0 / 70.0 + 0.5);
 	if (percent > 100)
 		percent = 100;
-	(void)snprintf(wifi_text, sizeof(wifi_text), "%s %.32s %ld%%",
-	               ICON_WIFI, ssid, percent);
+	(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s %.20s %ld%%^d^",
+	               COLOR_WHITE, ICON_WIFI, ssid, percent);
 }
 
 static void
@@ -463,20 +516,24 @@ refresh_battery(void)
 {
 	long capacity;
 	char state[32];
-	const char *icon;
+	const char *color;
+	int charging;
 
 	battery_text[0] = '\0';
 	if (read_long_fd(battery_capacity_fd, &capacity) < 0 ||
 	    read_fd(battery_status_fd, state, sizeof(state)) < 0)
 		return;
-	if (strncmp(state, "Charging", 8) == 0)
-		icon = ICON_BAT_CHARGING;
-	else if (strncmp(state, "Discharging", 11) == 0)
-		icon = ICON_BAT_DISCHARGING;
+	charging = strncmp(state, "Charging", 8) == 0;
+	if (capacity > 70)
+		color = COLOR_GREEN;
+	else if (capacity >= 30)
+		color = COLOR_ORANGE;
 	else
-		icon = ICON_BAT_OTHER;
-	(void)snprintf(battery_text, sizeof(battery_text), "%s %ld%%%s", icon,
-	               capacity, capacity < 15 ? " LOW" : "");
+		color = COLOR_RED;
+	(void)snprintf(battery_text, sizeof(battery_text),
+	               "^c%s^%s %ld%%%s%s^d^", color, ICON_BATTERY, capacity,
+	               charging ? " " ICON_CHARGING : "",
+	               capacity < 15 ? " LOW" : "");
 }
 
 static void
@@ -527,7 +584,7 @@ close_files(void)
 {
 	int *fds[] = { &stat_fd, &meminfo_fd, &wireless_fd, &brightness_fd,
 	               &max_brightness_fd, &battery_capacity_fd,
-	               &battery_status_fd, &wifi_state_fd };
+	               &battery_status_fd, &wifi_state_fd, &wifi_flags_fd };
 	size_t i;
 
 	for (i = 0; i < sizeof(fds) / sizeof(fds[0]); i++) {
@@ -569,6 +626,7 @@ main(void)
 	discover_brightness();
 	discover_battery();
 	discover_wifi();
+	discover_bluetooth();
 	stat_fd = open("/proc/stat", O_RDONLY | O_CLOEXEC);
 	meminfo_fd = open("/proc/meminfo", O_RDONLY | O_CLOEXEC);
 	wireless_fd = open("/proc/net/wireless", O_RDONLY | O_CLOEXEC);
@@ -623,7 +681,8 @@ main(void)
 		status[0] = '\0';
 		append_controlled_module(status, sizeof(status), volume_text, 'V');
 		append_controlled_module(status, sizeof(status), brightness_text, 'B');
-		append_module(status, sizeof(status), wifi_text);
+		append_controlled_module(status, sizeof(status), wifi_text, 'W');
+		append_controlled_module(status, sizeof(status), bluetooth_text, 'L');
 		append_module(status, sizeof(status), cpu_text);
 		append_module(status, sizeof(status), ram_text);
 		append_module(status, sizeof(status), disk_text);

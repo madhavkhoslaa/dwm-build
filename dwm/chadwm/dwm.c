@@ -150,6 +150,8 @@ enum {
   ClkStatusText,
   ClkStatusVolume,
   ClkStatusBrightness,
+  ClkStatusWifi,
+  ClkStatusBluetooth,
   ClkWinTitle,
   ClkClientWin,
   ClkRootWin,
@@ -371,6 +373,8 @@ static char stext[1024];
 static char centered_status[128];
 static int status_volume_start = -1, status_volume_end = -1;
 static int status_brightness_start = -1, status_brightness_end = -1;
+static int status_wifi_start = -1, status_wifi_end = -1;
+static int status_bluetooth_start = -1, status_bluetooth_end = -1;
 static int screen;
 static int sw, sh;      /* X display screen geometry width, height */
 static int bh;          /* bar height */
@@ -659,6 +663,10 @@ void buttonpress(XEvent *e) {
          click = ClkStatusVolume;
   else if (ev->x >= status_brightness_start && ev->x < status_brightness_end)
          click = ClkStatusBrightness;
+  else if (ev->x >= status_wifi_start && ev->x < status_wifi_end)
+         click = ClkStatusWifi;
+  else if (ev->x >= status_bluetooth_start && ev->x < status_bluetooth_end)
+         click = ClkStatusBluetooth;
   else if (ev->x > selmon->ww - (int)TEXTW(stext))
          click = ClkStatusText;
   else
@@ -1124,6 +1132,8 @@ int drawstatusbar(Monitor *m, int bh, char *stext) {
   x += horizpadbar / 2;
   status_volume_start = status_volume_end = -1;
   status_brightness_start = status_brightness_end = -1;
+  status_wifi_start = status_wifi_end = -1;
+  status_bluetooth_start = status_bluetooth_end = -1;
 
   /* process status text */
   i = -1;
@@ -1180,6 +1190,16 @@ int drawstatusbar(Monitor *m, int bh, char *stext) {
             status_brightness_start = x;
           else
             status_brightness_end = x;
+        } else if (text[i] == 'W') {
+          if (status_wifi_start < 0)
+            status_wifi_start = x;
+          else
+            status_wifi_end = x;
+        } else if (text[i] == 'L') {
+          if (status_bluetooth_start < 0)
+            status_bluetooth_start = x;
+          else
+            status_bluetooth_end = x;
         }
       }
 
