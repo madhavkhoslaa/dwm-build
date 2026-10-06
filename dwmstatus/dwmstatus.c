@@ -508,6 +508,21 @@ append_module(char *status, size_t size, const char *module)
 }
 
 static void
+append_controlled_module(char *status, size_t size, const char *module,
+                         char marker)
+{
+	size_t used;
+
+	if (!module[0])
+		return;
+	used = strlen(status);
+	if (used >= size - 1)
+		return;
+	(void)snprintf(status + used, size - used, "%s^%c^%s^%c^",
+	               used ? SEPARATOR : "", marker, module, marker);
+}
+
+static void
 close_files(void)
 {
 	int *fds[] = { &stat_fd, &meminfo_fd, &wireless_fd, &brightness_fd,
@@ -582,8 +597,8 @@ main(void)
 		refresh_time();
 
 		status[0] = '\0';
-		append_module(status, sizeof(status), volume_text);
-		append_module(status, sizeof(status), brightness_text);
+		append_controlled_module(status, sizeof(status), volume_text, 'V');
+		append_controlled_module(status, sizeof(status), brightness_text, 'B');
 		append_module(status, sizeof(status), wifi_text);
 		append_module(status, sizeof(status), cpu_text);
 		append_module(status, sizeof(status), ram_text);

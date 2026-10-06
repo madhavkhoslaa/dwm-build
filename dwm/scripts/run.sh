@@ -7,4 +7,4 @@ xset r rate 200 50 &
 picom &
 
 dwmstatus &
-while type chadwm >/dev/null; do chadwm && continue || break; done
+while type dwm >/dev/null; do dwm && continue || break; done

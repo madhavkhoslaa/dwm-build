@@ -260,6 +260,10 @@ static const Button buttons[] = {
     { ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[2]} },
     { ClkWinTitle,          0,              Button2,        zoom,           {0} },
     { ClkStatusText,        0,              Button2,        spawn,          SHCMD("st") },
+    { ClkStatusVolume,      0,              Button4,        spawn,          {.v = upvol} },
+    { ClkStatusVolume,      0,              Button5,        spawn,          {.v = downvol} },
+    { ClkStatusBrightness,  0,              Button4,        spawn,          {.v = light_up} },
+    { ClkStatusBrightness,  0,              Button5,        spawn,          {.v = light_down} },
 
     /* Keep movemouse? */
     /* { ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} }, */

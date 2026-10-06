@@ -14,5 +14,8 @@ The configured shortcuts are:
 - `Super+K`: cycle keyboard-backlight states
 - `Super+T`: st terminal
 
+The final clock module is centered. Scrolling over the volume or brightness
+module adjusts that value and immediately refreshes `dwmstatus`.
+
 See `dwmstatus/README.md` for status, power-menu, build, and signal-refresh
 instructions.

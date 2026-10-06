@@ -148,6 +148,8 @@ enum {
   ClkTabClose,
   ClkLtSymbol,
   ClkStatusText,
+  ClkStatusVolume,
+  ClkStatusBrightness,
   ClkWinTitle,
   ClkClientWin,
   ClkRootWin,
@@ -367,6 +369,8 @@ static Systray *systray = NULL;
 static const char broken[] = "broken";
 static char stext[1024];
 static char centered_status[128];
+static int status_volume_start = -1, status_volume_end = -1;
+static int status_brightness_start = -1, status_brightness_end = -1;
 static int screen;
 static int sw, sh;      /* X display screen geometry width, height */
 static int bh;          /* bar height */
@@ -651,7 +655,11 @@ void buttonpress(XEvent *e) {
 			}
 	}
 
-  if (ev->x > selmon->ww - (int)TEXTW(stext))
+  if (ev->x >= status_volume_start && ev->x < status_volume_end)
+         click = ClkStatusVolume;
+  else if (ev->x >= status_brightness_start && ev->x < status_brightness_end)
+         click = ClkStatusBrightness;
+  else if (ev->x > selmon->ww - (int)TEXTW(stext))
          click = ClkStatusText;
   else
          click = ClkWinTitle;
@@ -1114,6 +1122,8 @@ int drawstatusbar(Monitor *m, int bh, char *stext) {
   drw->scheme[ColBg] = scheme[SchemeNorm][ColBg];
   drw_rect(drw, x, borderpx, w, bh, 1, 1);
   x += horizpadbar / 2;
+  status_volume_start = status_volume_end = -1;
+  status_brightness_start = status_brightness_end = -1;
 
   /* process status text */
   i = -1;
@@ -1160,6 +1170,16 @@ int drawstatusbar(Monitor *m, int bh, char *stext) {
           drw_rect(drw, rx + x, ry + borderpx + vertpadbar / 2, rw, rh, 1, 0);
         } else if (text[i] == 'f') {
           x += atoi(text + ++i);
+        } else if (text[i] == 'V') {
+          if (status_volume_start < 0)
+            status_volume_start = x;
+          else
+            status_volume_end = x;
+        } else if (text[i] == 'B') {
+          if (status_brightness_start < 0)
+            status_brightness_start = x;
+          else
+            status_brightness_end = x;
         }
       }
 
