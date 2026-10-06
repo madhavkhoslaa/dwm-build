@@ -1,0 +1,4 @@
+*.o
+dwm/chadwm/config.h
+dwm/chadwm/dwm
+dwmstatus/dwmstatus
