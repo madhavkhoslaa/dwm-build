@@ -5,7 +5,7 @@ Small Xlib-only status generator for dwm, plus a dmenu power script.
 ## Dependencies
 
 ```sh
-sudo xbps-install -S git gcc make libX11-devel iw wireplumber dmenu slock
+sudo xbps-install -S git gcc make libX11-devel iw wireplumber dmenu slock brightnessctl
 ```
 
 Install a Nerd Font package as well so the status icons render correctly.

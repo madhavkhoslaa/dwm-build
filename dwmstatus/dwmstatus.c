@@ -19,7 +19,7 @@
 
 /* Appearance: change these without touching module code. */
 #define SEPARATOR " | "
-#define ICON_VOLUME ""
+#define ICON_VOLUME "󰕾"
 #define ICON_MUTED ""
 #define ICON_BRIGHTNESS "󰃠"
 #define ICON_WIFI "󰖩"

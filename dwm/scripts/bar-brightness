@@ -1,0 +1,16 @@
+#!/bin/sh
+
+current=$(brightnessctl -m 2>/dev/null | awk -F, 'NR == 1 { gsub(/%/, "", $4); print $4 }')
+[ -n "$current" ] || exit 1
+
+case $1 in
+	up) next=$((current + 5)) ;;
+	down) next=$((current - 5)) ;;
+	*) exit 2 ;;
+esac
+
+[ "$next" -gt 100 ] && next=100
+[ "$next" -lt 1 ] && next=1
+
+brightnessctl set "$next%" >/dev/null || exit 1
+pkill -RTMIN+2 dwmstatus 2>/dev/null || true
