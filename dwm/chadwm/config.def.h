@@ -34,8 +34,8 @@ static const char *downvol[] = { "/bin/sh", "-c", "wpctl set-volume @DEFAULT_AUD
 static const char *mutevol[] = { "/bin/sh", "-c", "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; pkill -RTMIN+1 dwmstatus", NULL };
 static const char *light_up[] = { "/bin/sh", "-c", "xbacklight -inc 5; pkill -RTMIN+2 dwmstatus", NULL };
 static const char *light_down[] = { "/bin/sh", "-c", "xbacklight -dec 5; pkill -RTMIN+2 dwmstatus", NULL };
-static const char *wifi_menu[] = { "st", "-e", "nmtui", NULL };
-static const char *bluetooth_menu[] = { "st", "-e", "bluetoothctl", NULL };
+static const char *wifi_menu[] = { "st", "-c", "status-popup", "-e", "nmtui", NULL };
+static const char *bluetooth_menu[] = { "st", "-c", "status-popup", "-e", "bluetoothctl", NULL };
 static const int new_window_attach_on_end = 0; /*  1 means the new window will attach on the end; 0 means the new window will attach on the front,default is front */
 #define ICONSIZE 19   /* icon size */
 #define ICONSPACING 8 /* space between icon and title */
@@ -91,7 +91,7 @@ static const Rule rules[] = {
     /* class      instance    title       tags mask     iscentered   isfloating   monitor */
     { "Gimp",     NULL,       NULL,       0,            0,           1,           -1 },
     { "Firefox",  NULL,       NULL,       1 << 8,       0,           0,           -1 },
-    { "st-256color", NULL,     NULL,       0,            1,           1,           -1 },
+    { "status-popup", NULL,    NULL,       0,            1,           1,           -1 },
     { "eww",      NULL,       NULL,       0,            0,           1,           -1 },
 };
 
