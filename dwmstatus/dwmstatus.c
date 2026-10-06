@@ -542,8 +542,11 @@ main(void)
 {
 	struct sigaction action;
 	struct timespec tick = { 1, 0 };
+	struct timespec now;
 	sigset_t refresh_mask, previous_mask;
-	unsigned long seconds = 0;
+	time_t last_volume = 0, last_brightness = 0, last_wifi = 0;
+	time_t last_cpu = 0, last_ram = 0, last_disk = 0;
+	time_t last_battery = 0, last_time = 0;
 	sig_atomic_t flags;
 	char status[STATUS_SIZE] = "";
 	char previous[STATUS_SIZE] = "";
@@ -577,24 +580,45 @@ main(void)
 	}
 
 	while (running) {
+		if (clock_gettime(CLOCK_MONOTONIC, &now) < 0)
+			break;
 		(void)sigprocmask(SIG_BLOCK, &refresh_mask, &previous_mask);
 		flags = refresh_flags;
 		refresh_flags = 0;
 		(void)sigprocmask(SIG_SETMASK, &previous_mask, NULL);
-		if ((flags & REFRESH_VOLUME) || seconds % 30 == 0)
+		if ((flags & REFRESH_VOLUME) || now.tv_sec - last_volume >= 30) {
 			refresh_volume();
-		if ((flags & REFRESH_BRIGHTNESS) || seconds % 30 == 0)
+			last_volume = now.tv_sec;
+		}
+		if ((flags & REFRESH_BRIGHTNESS) ||
+		    now.tv_sec - last_brightness >= 30) {
 			refresh_brightness();
-		if (seconds % 10 == 0)
+			last_brightness = now.tv_sec;
+		}
+		if (now.tv_sec - last_wifi >= 10) {
 			refresh_wifi();
-		refresh_cpu();
-		if (seconds % 2 == 0)
+			last_wifi = now.tv_sec;
+		}
+		if (now.tv_sec - last_cpu >= 1) {
+			refresh_cpu();
+			last_cpu = now.tv_sec;
+		}
+		if (now.tv_sec - last_ram >= 2) {
 			refresh_ram();
-		if (seconds % 30 == 0)
+			last_ram = now.tv_sec;
+		}
+		if (now.tv_sec - last_disk >= 30) {
 			refresh_disk();
-		if (seconds % 15 == 0)
+			last_disk = now.tv_sec;
+		}
+		if (now.tv_sec - last_battery >= 15) {
 			refresh_battery();
-		refresh_time();
+			last_battery = now.tv_sec;
+		}
+		if (now.tv_sec - last_time >= 1) {
+			refresh_time();
+			last_time = now.tv_sec;
+		}
 
 		status[0] = '\0';
 		append_controlled_module(status, sizeof(status), volume_text, 'V');
@@ -614,7 +638,6 @@ main(void)
 		if (!running)
 			break;
 		(void)nanosleep(&tick, NULL);
-		seconds++;
 	}
 
 	XStoreName(dpy, DefaultRootWindow(dpy), "");
