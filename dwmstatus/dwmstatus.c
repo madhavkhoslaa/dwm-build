@@ -398,7 +398,7 @@ static void
 refresh_wifi(void)
 {
 	char state[16];
-	char *line, *colon, *ssid, *end;
+	char *line, *colon;
 	double quality = -1.0;
 	long percent;
 	unsigned long flags;
@@ -426,18 +426,11 @@ refresh_wifi(void)
 		               "^c%s^%s not connected^d^", COLOR_GREY, ICON_WIFI);
 		return;
 	}
-	ssid = strstr(command_output, "SSID: ");
-	if (!ssid)
-		return;
-	ssid += 6;
-	end = strchr(ssid, '\n');
-	if (end)
-		*end = '\0';
 	percent = quality < 0.0 ? 0 : (long)(quality * 100.0 / 70.0 + 0.5);
 	if (percent > 100)
 		percent = 100;
-	(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s %.12s %ld%%^d^",
-	               COLOR_WHITE, ICON_WIFI, ssid, percent);
+	(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s %ld%%^d^",
+	               COLOR_WHITE, ICON_WIFI, percent);
 }
 
 static void
