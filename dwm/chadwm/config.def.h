@@ -91,6 +91,7 @@ static const Rule rules[] = {
     /* class      instance    title       tags mask     iscentered   isfloating   monitor */
     { "Gimp",     NULL,       NULL,       0,            0,           1,           -1 },
     { "Firefox",  NULL,       NULL,       1 << 8,       0,           0,           -1 },
+    { "St",       NULL,       NULL,       0,            1,           1,           -1 },
     { "eww",      NULL,       NULL,       0,            0,           1,           -1 },
 };
 
@@ -156,6 +157,7 @@ static const Key keys[] = {
     { MODKEY,                           XK_b,       spawn,          SHCMD("firefox") },
     { MODKEY,                           XK_k,       spawn,          SHCMD("$HOME/.local/bin/kbd-backlight-cycle") },
     { MODKEY,                           XK_t,       spawn,          SHCMD("st") },
+    { MODKEY|ShiftMask,                 XK_s,       spawn,          SHCMD("scrot -s '$HOME/Pictures/Screenshot_%Y-%m-%d_%H-%M-%S.png'") },
     { MODKEY|ShiftMask,                 XK_p,       spawn,          SHCMD("bar-power") },
     { MODKEY,                           XK_x,       spawn,          SHCMD("slock") },
     { MODKEY,                           XK_Return,  spawn,          SHCMD("st")},
