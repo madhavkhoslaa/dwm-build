@@ -1,8 +1,10 @@
 #!/bin/sh
 
-xrdb merge ~/.Xresources 
+xrdb merge ~/.Xresources
+if ! "$HOME/.config/chadwm/scripts/theme-picker" --restore startup; then
+  feh --bg-fill "$HOME/Pictures/wall/gruv.png" &
+fi
 xbacklight -set 10 &
-feh --bg-fill ~/Pictures/wall/gruv.png &
 xset r rate 200 50 &
 picom &
 

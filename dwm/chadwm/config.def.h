@@ -43,7 +43,7 @@ static const int new_window_attach_on_end = 0; /*  1 means the new window will a
 static const char *fonts[]          = {"JetBrainsMono Nerd Font Mono:style=Regular:size=14"};
 
 // theme
-#include "themes/tundra.h"
+#include "themes/wal.h"
 
 static const char *colors[][3]      = {
     /*                     fg       bg      border */
@@ -150,6 +150,7 @@ static const Key keys[] = {
     { MODKEY,                           XK_b,       spawn,          SHCMD("firefox") },
     { MODKEY,                           XK_k,       spawn,          SHCMD("$HOME/.local/bin/kbd-backlight-cycle") },
     { MODKEY,                           XK_t,       spawn,          SHCMD("st") },
+    { MODKEY|ShiftMask,                 XK_w,       spawn,          SHCMD("$HOME/.config/chadwm/scripts/theme-picker") },
     { MODKEY|ShiftMask,                 XK_s,       spawn,          SHCMD("scrot -s '$HOME/Pictures/Screenshot_%Y-%m-%d_%H-%M-%S.png'") },
     { MODKEY,                           XK_p,       spawn,          SHCMD("bar-power") },
     { MODKEY,                           XK_x,       spawn,          SHCMD("slock") },
@@ -224,7 +225,6 @@ static const Key keys[] = {
 
     // change border size
     { MODKEY|ShiftMask,                 XK_minus,   setborderpx,    {.i = -1 } },
-    { MODKEY|ShiftMask,                 XK_w,       setborderpx,    {.i = default_border } },
 
     // kill dwm
     { MODKEY|ControlMask,               XK_q,       spawn,        SHCMD("killall bar.sh chadwm") },

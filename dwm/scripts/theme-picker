@@ -1,0 +1,163 @@
+#!/bin/sh
+
+wall_dir=${WALLPAPER_DIR:-"$HOME/Pictures/wall"}
+state_dir="$HOME/.cache/theme-picker"
+state_file="$state_dir/wallpaper"
+dwm_dir="$HOME/.config/chadwm/chadwm"
+runtime_dir=${XDG_RUNTIME_DIR:-/tmp}
+uid=$(id -u)
+lock_dir="$runtime_dir/theme-picker-$uid.lock"
+startup=0
+
+error() {
+	if [ -n "${DISPLAY:-}" ] && command -v dmenu >/dev/null 2>&1; then
+		printf '%s\n' "$1" | dmenu -i -p "Theme error" >/dev/null
+	else
+		printf 'theme-picker: %s\n' "$1" >&2
+	fi
+}
+
+cleanup() {
+	rmdir "$lock_dir" 2>/dev/null || true
+}
+
+if ! mkdir "$lock_dir" 2>/dev/null; then
+	error "Another theme change is already running"
+	exit 1
+fi
+trap cleanup EXIT HUP INT TERM
+
+mkdir -p "$state_dir" "$HOME/.config/rofi/themes" \
+	"$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
+
+case ${1:-} in
+	--restore)
+		startup=${2:-0}
+		[ -r "$state_file" ] && IFS= read -r wallpaper < "$state_file"
+		wallpaper=${wallpaper:-"$wall_dir/gruv.png"}
+		;;
+	--random)
+		wallpaper=$(find "$wall_dir" -maxdepth 1 -type f \
+			\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+			| awk 'BEGIN { srand() } { files[NR] = $0 } END { if (NR) print files[1 + int(rand() * NR)] }')
+		;;
+	'')
+		choice=$(
+			{
+				printf '%s\n' "Random wallpaper" "Restore previous theme"
+				find "$wall_dir" -maxdepth 1 -type f \
+					\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+					| sort
+			} | dmenu -i -l 15 -p "Wallpaper"
+		) || exit 0
+		case $choice in
+			"Random wallpaper")
+				wallpaper=$(find "$wall_dir" -maxdepth 1 -type f \
+					\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+					| awk 'BEGIN { srand() } { files[NR] = $0 } END { if (NR) print files[1 + int(rand() * NR)] }')
+				;;
+			"Restore previous theme")
+				[ -r "$state_file" ] && IFS= read -r wallpaper < "$state_file"
+				wallpaper=${wallpaper:-"$wall_dir/gruv.png"}
+				;;
+			*) wallpaper=$choice ;;
+		esac
+		;;
+	*)
+		wallpaper=$1
+		;;
+esac
+
+if [ ! -f "${wallpaper:-}" ]; then
+	error "No wallpaper selected"
+	exit 1
+fi
+if ! command -v wal >/dev/null 2>&1 ||
+   { ! command -v magick >/dev/null 2>&1 && ! command -v convert >/dev/null 2>&1; }; then
+	error "Install ImageMagick: sudo xbps-install -S ImageMagick"
+	exit 1
+fi
+
+if ! wal -n -q -i "$wallpaper" >/tmp/theme-picker-wal.log 2>&1; then
+	error "Could not generate colors from the wallpaper"
+	exit 1
+fi
+
+# pywal creates this trusted shell fragment from the generated palette.
+. "$HOME/.cache/wal/colors.sh"
+
+cat > "$dwm_dir/themes/wal.h.new" <<EOF
+static const char black[]       = "$background";
+static const char gray2[]       = "$color8";
+static const char gray3[]       = "$foreground";
+static const char gray4[]       = "$background";
+static const char blue[]        = "$color4";
+static const char green[]       = "$color2";
+static const char red[]         = "$color1";
+static const char orange[]      = "$color3";
+static const char yellow[]      = "$color11";
+static const char pink[]        = "$color5";
+static const char col_borderbar[] = "$background";
+static const char white[]       = "$foreground";
+EOF
+
+cat > "$HOME/.config/rofi/themes/wal.rasi.new" <<EOF
+* {
+    bg-col: $background;
+    bg-col-light: $color8;
+    border-col: $color4;
+    selected-col: $color4;
+    blue: $color4;
+    fg-col: $foreground;
+    fg-col2: $color15;
+    grey: $color8;
+}
+EOF
+
+cat > "$HOME/.config/gtk-3.0/wal.css.new" <<EOF
+@define-color theme_bg_color $background;
+@define-color theme_fg_color $foreground;
+@define-color theme_base_color $color0;
+@define-color theme_text_color $foreground;
+@define-color theme_selected_bg_color $color4;
+@define-color theme_selected_fg_color $color15;
+@define-color insensitive_bg_color $color8;
+@define-color insensitive_fg_color $color7;
+EOF
+cp "$HOME/.config/gtk-3.0/wal.css.new" "$HOME/.config/gtk-4.0/wal.css.new"
+
+[ -f "$dwm_dir/themes/wal.h" ] && cp "$dwm_dir/themes/wal.h" "$dwm_dir/themes/wal.h.previous"
+mv "$dwm_dir/themes/wal.h.new" "$dwm_dir/themes/wal.h"
+mv "$HOME/.config/rofi/themes/wal.rasi.new" "$HOME/.config/rofi/themes/wal.rasi"
+mv "$HOME/.config/gtk-3.0/wal.css.new" "$HOME/.config/gtk-3.0/wal.css"
+mv "$HOME/.config/gtk-4.0/wal.css.new" "$HOME/.config/gtk-4.0/wal.css"
+
+if ! make -C "$dwm_dir" clean >/dev/null 2>&1 ||
+   ! make -C "$dwm_dir" >/tmp/theme-picker-build.log 2>&1; then
+	[ -f "$dwm_dir/themes/wal.h.previous" ] && \
+		mv "$dwm_dir/themes/wal.h.previous" "$dwm_dir/themes/wal.h"
+	error "DWM build failed; see /tmp/theme-picker-build.log"
+	exit 1
+fi
+
+cp "$dwm_dir/dwm" "$HOME/.local/bin/dwm.new"
+chmod 755 "$HOME/.local/bin/dwm.new"
+mv "$HOME/.local/bin/dwm.new" "$HOME/.local/bin/dwm"
+cp "$dwm_dir/dwm" "$HOME/.local/bin/chadwm.new"
+chmod 755 "$HOME/.local/bin/chadwm.new"
+mv "$HOME/.local/bin/chadwm.new" "$HOME/.local/bin/chadwm"
+
+feh --bg-fill "$wallpaper"
+printf '%s\n' "$wallpaper" > "$state_file.new"
+mv "$state_file.new" "$state_file"
+xrdb -merge "$HOME/.cache/wal/colors.Xresources" 2>/dev/null || true
+
+# Apply terminal colors to currently writable pseudo-terminals.
+for terminal in /dev/pts/[0-9]*; do
+	[ -w "$terminal" ] && cat "$HOME/.cache/wal/sequences" > "$terminal"
+done
+
+pkill -HUP dwmstatus 2>/dev/null || true
+if [ "$startup" != "startup" ]; then
+	pkill -USR1 dwm 2>/dev/null || pkill -USR1 chadwm 2>/dev/null || true
+fi

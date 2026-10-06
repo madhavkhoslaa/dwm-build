@@ -30,12 +30,12 @@
 #define ICON_BATTERY "󰁹"
 #define ICON_CHARGING ""
 #define ICON_TIME "󰥔"
-#define COLOR_WHITE "#ffffff"
-#define COLOR_GREY "#777777"
-#define COLOR_BLACK "#000000"
-#define COLOR_GREEN "#00cc66"
-#define COLOR_ORANGE "#ff9900"
-#define COLOR_RED "#ff3333"
+#define COLOR_WHITE theme_white
+#define COLOR_GREY theme_grey
+#define COLOR_BLACK theme_black
+#define COLOR_GREEN theme_green
+#define COLOR_ORANGE theme_orange
+#define COLOR_RED theme_red
 
 #define STATUS_SIZE 256
 #define MODULE_SIZE 64
@@ -51,7 +51,8 @@ enum audio_backend {
 
 enum refresh_flag {
 	REFRESH_VOLUME = 1,
-	REFRESH_BRIGHTNESS = 2
+	REFRESH_BRIGHTNESS = 2,
+	REFRESH_THEME = 4
 };
 
 static Display *dpy;
@@ -74,6 +75,12 @@ static char command_output[COMMAND_SIZE];
 static char command_drain[128];
 static char read_buffer[READ_SIZE];
 static char command[128];
+static char theme_white[8] = "#ffffff";
+static char theme_grey[8] = "#777777";
+static char theme_black[8] = "#000000";
+static char theme_green[8] = "#00cc66";
+static char theme_orange[8] = "#ff9900";
+static char theme_red[8] = "#ff3333";
 
 static char volume_text[MODULE_SIZE];
 static char brightness_text[MODULE_SIZE];
@@ -85,6 +92,8 @@ static char disk_text[MODULE_SIZE];
 static char battery_text[MODULE_SIZE];
 static char time_text[MODULE_SIZE];
 
+static int read_fd(int fd, char *buffer, size_t size);
+
 static void
 handle_signal(int signo)
 {
@@ -94,6 +103,55 @@ handle_signal(int signo)
 		refresh_flags |= REFRESH_VOLUME;
 	else if (signo == SIGRTMIN + 2)
 		refresh_flags |= REFRESH_BRIGHTNESS;
+	else if (signo == SIGHUP)
+		refresh_flags |= REFRESH_THEME;
+}
+
+static int
+copy_palette_color(char destination[8], const char *palette, int index)
+{
+	const char *line = palette;
+	int current;
+
+	for (current = 0; current < index; current++) {
+		line = strchr(line, '\n');
+		if (!line)
+			return -1;
+		line++;
+	}
+	if (line[0] != '#' || strlen(line) < 7)
+		return -1;
+	memcpy(destination, line, 7);
+	destination[7] = '\0';
+	return 0;
+}
+
+static void
+load_theme_colors(void)
+{
+	char path[256];
+	const char *home;
+	int fd;
+
+	home = getenv("HOME");
+	if (!home || snprintf(path, sizeof(path), "%s/.cache/wal/colors", home) >=
+	             (int)sizeof(path))
+		return;
+	fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (fd < 0)
+		return;
+	if (read_fd(fd, read_buffer, sizeof(read_buffer)) > 0) {
+		(void)copy_palette_color(theme_black, read_buffer, 0);
+		(void)copy_palette_color(theme_red, read_buffer, 1);
+		(void)copy_palette_color(theme_green, read_buffer, 2);
+		(void)copy_palette_color(theme_orange, read_buffer, 3);
+		(void)copy_palette_color(theme_white, read_buffer, 7);
+		(void)copy_palette_color(theme_grey, read_buffer, 8);
+		if (bluetooth_text[0])
+			(void)snprintf(bluetooth_text, sizeof(bluetooth_text),
+			               "^c%s^%s^d^", COLOR_WHITE, ICON_BLUETOOTH);
+	}
+	close(fd);
 }
 
 static int
@@ -607,6 +665,7 @@ main(void)
 	sigemptyset(&action.sa_mask);
 	if (sigaction(SIGINT, &action, NULL) < 0 ||
 	    sigaction(SIGTERM, &action, NULL) < 0 ||
+	    sigaction(SIGHUP, &action, NULL) < 0 ||
 	    sigaction(SIGRTMIN + 1, &action, NULL) < 0 ||
 	    sigaction(SIGRTMIN + 2, &action, NULL) < 0) {
 		perror("sigaction");
@@ -615,12 +674,14 @@ main(void)
 	sigemptyset(&refresh_mask);
 	sigaddset(&refresh_mask, SIGRTMIN + 1);
 	sigaddset(&refresh_mask, SIGRTMIN + 2);
+	sigaddset(&refresh_mask, SIGHUP);
 
 	detect_audio();
 	discover_brightness();
 	discover_battery();
 	discover_wifi();
 	discover_bluetooth();
+	load_theme_colors();
 	stat_fd = open("/proc/stat", O_RDONLY | O_CLOEXEC);
 	meminfo_fd = open("/proc/meminfo", O_RDONLY | O_CLOEXEC);
 	wireless_fd = open("/proc/net/wireless", O_RDONLY | O_CLOEXEC);
@@ -638,6 +699,11 @@ main(void)
 		flags = refresh_flags;
 		refresh_flags = 0;
 		(void)sigprocmask(SIG_SETMASK, &previous_mask, NULL);
+		if (flags & REFRESH_THEME) {
+			load_theme_colors();
+			refresh_wifi();
+			refresh_battery();
+		}
 		if ((flags & REFRESH_VOLUME) || now.tv_sec - last_volume >= 30) {
 			refresh_volume();
 			last_volume = now.tv_sec;

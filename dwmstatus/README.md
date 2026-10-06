@@ -66,6 +66,9 @@ The status order is volume, brightness, Wi-Fi, CPU, RAM, root disk, battery,
 and local time. Send `SIGTERM` or `SIGINT` for a clean exit that clears the
 root window name.
 
+Send `SIGHUP` to reload semantic colors from `~/.cache/wal/colors` without
+restarting the process.
+
 In the accompanying DWM build, the final time module is drawn in the center.
 The volume and brightness modules contain invisible status markers used by
 DWM to provide module-specific mouse-wheel controls.

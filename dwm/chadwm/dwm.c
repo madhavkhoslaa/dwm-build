@@ -319,6 +319,7 @@ static void setcfact(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setnumdesktops(void);
 static void setup(void);
+static void sigrestart(int unused);
 static void setviewport(void);
 static void seturgent(Client *c, int urg);
 static void show(Client *c);
@@ -2911,6 +2912,11 @@ void setmfact(const Arg *arg) {
   arrange(selmon);
 }
 
+void sigrestart(int unused) {
+  (void)unused;
+  running = 0;
+}
+
 void setup(void) {
   int i;
   XSetWindowAttributes wa;
@@ -2921,6 +2927,9 @@ void setup(void) {
   sa.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART;
   sa.sa_handler = SIG_IGN;
   sigaction(SIGCHLD, &sa, NULL);
+  sa.sa_flags = 0;
+  sa.sa_handler = sigrestart;
+  sigaction(SIGUSR1, &sa, NULL);
 
   /* clean up any zombies (inherited from .xinitrc etc) immediately */
   while (waitpid(-1, NULL, WNOHANG) > 0);
