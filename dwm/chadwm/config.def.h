@@ -32,8 +32,8 @@ static const int colorfultag        = 1;        /* 0 means use SchemeSel for sel
 static const char *upvol[]   = { "/bin/sh", "-c", "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+; pkill -RTMIN+1 dwmstatus", NULL };
 static const char *downvol[] = { "/bin/sh", "-c", "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-; pkill -RTMIN+1 dwmstatus", NULL };
 static const char *mutevol[] = { "/bin/sh", "-c", "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; pkill -RTMIN+1 dwmstatus", NULL };
-static const char *light_up[] = { "/bin/sh", "-c", "$HOME/.local/bin/display-brightness up; pkill -RTMIN+2 dwmstatus", NULL };
-static const char *light_down[] = { "/bin/sh", "-c", "$HOME/.local/bin/display-brightness down; pkill -RTMIN+2 dwmstatus", NULL };
+static const char *light_up[] = { "/bin/sh", "-c", "xbacklight -inc 5; pkill -RTMIN+2 dwmstatus", NULL };
+static const char *light_down[] = { "/bin/sh", "-c", "xbacklight -dec 5; pkill -RTMIN+2 dwmstatus", NULL };
 static const int new_window_attach_on_end = 0; /*  1 means the new window will attach on the end; 0 means the new window will attach on the front,default is front */
 #define ICONSIZE 19   /* icon size */
 #define ICONSPACING 8 /* space between icon and title */
