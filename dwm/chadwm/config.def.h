@@ -67,13 +67,6 @@ static const char *colors[][3]      = {
 /* tagging */
 static char *tags[] = {"1", "2", "3", "4", "5"};
 
-static const char* eww[] = { "eww", "-c", "/home/vroomer/.config/eww", "open" , "eww", NULL };
-
-static const Launcher launchers[] = {
-    /* command     name to display */
-    { eww,         "" },
-};
-
 static const int tagschemes[] = {
     SchemeTag1, SchemeTag2, SchemeTag3, SchemeTag4, SchemeTag5
 };
