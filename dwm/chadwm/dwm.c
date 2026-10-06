@@ -366,6 +366,7 @@ static void zoom(const Arg *arg);
 static Systray *systray = NULL;
 static const char broken[] = "broken";
 static char stext[1024];
+static char centered_status[128];
 static int screen;
 static int sw, sh;      /* X display screen geometry width, height */
 static int bh;          /* bar height */
@@ -1047,12 +1048,32 @@ int drawstatusbar(Monitor *m, int bh, char *stext) {
   short isCode = 0;
   char *text;
   char *p;
+  char *last = NULL;
+  char *scan = stext;
+  char right[sizeof centered_status * 8];
+  const char *source = stext;
+  size_t rightlen;
 
-  len = strlen(stext) + 1;
+  centered_status[0] = '\0';
+  while ((scan = strstr(scan, " | "))) {
+    last = scan;
+    scan += 3;
+  }
+  if (last) {
+    rightlen = (size_t)(last - stext);
+    if (rightlen < sizeof(right)) {
+      memcpy(right, stext, rightlen);
+      right[rightlen] = '\0';
+      source = right;
+      (void)snprintf(centered_status, sizeof(centered_status), "%s", last + 3);
+    }
+  }
+
+  len = strlen(source) + 1;
   if (!(text = (char *)malloc(sizeof(char) * len)))
     die("malloc");
   p = text;
-  memcpy(text, stext, len);
+  memcpy(text, source, len);
 
   /* compute width of the status text */
   w = 0;
@@ -1539,6 +1560,12 @@ void drawbar(Monitor *m) {
         drw_rect(drw, x, y, w, bh_n, 1, 1);
       }
     }
+  }
+  if (m == selmon && centered_status[0]) {
+    w = TEXTW(centered_status);
+    drw_setscheme(drw, scheme[SchemeNorm]);
+    drw_text(drw, (m->ww - w) / 2, 0, w, bh, lrpad / 2,
+             centered_status, 0);
   }
   drw_map(drw, m->barwin, 0, 0, m->ww - stw, bh);
 }
