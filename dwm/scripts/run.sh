@@ -2,6 +2,7 @@
 
 export PATH="$HOME/.local/bin:$PATH"
 
+pgrep -x xfsettingsd >/dev/null || xfsettingsd --daemon --disable-wm-check
 command -v xrdb >/dev/null 2>&1 && xrdb merge "$HOME/.Xresources"
 if ! "$HOME/.config/chadwm/scripts/theme-picker" --restore startup; then
   feh --bg-fill "$HOME/Pictures/wall/gruv.png" &
