@@ -63,7 +63,7 @@ static const char *colors[][3]      = {
 };
 
 /* tagging */
-static char *tags[] = {"", "", "", "", ""};
+static char *tags[] = {"1", "2", "3", "4", "5"};
 
 static const char* eww[] = { "eww", "-c", "/home/vroomer/.config/eww", "open" , "eww", NULL };
 
@@ -246,10 +246,6 @@ static const Key keys[] = {
     TAGKEYS(                            XK_3,                       2)
     TAGKEYS(                            XK_4,                       3)
     TAGKEYS(                            XK_5,                       4)
-    TAGKEYS(                            XK_6,                       5)
-    TAGKEYS(                            XK_7,                       6)
-    TAGKEYS(                            XK_8,                       7)
-    TAGKEYS(                            XK_9,                       8)
 };
 
 /* button definitions */
