@@ -23,7 +23,8 @@ lock_screen() {
 
 power_action() {
 	action=$1
-	if pgrep -x elogind >/dev/null 2>&1 && command -v loginctl >/dev/null 2>&1; then
+	if { pgrep -x elogind >/dev/null 2>&1 || pgrep -x elogind-daemon >/dev/null 2>&1; } &&
+	   command -v loginctl >/dev/null 2>&1; then
 		loginctl "$action" || error_menu "loginctl could not $action"
 	elif command -v doas >/dev/null 2>&1; then
 		doas "$action" || error_menu "doas could not $action"
