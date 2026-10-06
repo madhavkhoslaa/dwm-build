@@ -492,15 +492,17 @@ static void
 refresh_disk(void)
 {
 	struct statvfs fs;
-	unsigned long long total, used;
+	unsigned long long used_blocks;
+	double used_gib;
 
 	disk_text[0] = '\0';
 	if (statvfs("/", &fs) != 0 || fs.f_blocks == 0)
 		return;
-	total = (unsigned long long)fs.f_blocks;
-	used = total - (unsigned long long)fs.f_bfree;
-	(void)snprintf(disk_text, sizeof(disk_text), "%s / %llu%%", ICON_DISK,
-	               used * 100 / total);
+	used_blocks = (unsigned long long)fs.f_blocks -
+	              (unsigned long long)fs.f_bfree;
+	used_gib = (double)used_blocks * (double)fs.f_frsize / 1073741824.0;
+	(void)snprintf(disk_text, sizeof(disk_text), "%s %.1fG",
+	               ICON_DISK, used_gib);
 }
 
 static void
