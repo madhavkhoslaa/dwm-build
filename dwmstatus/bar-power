@@ -44,7 +44,7 @@ case $choice in
 	Logout)
 		if confirm "Logout"; then
 			if command -v pkill >/dev/null 2>&1; then
-				pkill -x dwm || error_menu "dwm is not running"
+				pkill -x dwm || pkill -x chadwm || error_menu "dwm is not running"
 			else
 				error_menu "pkill is not installed"
 			fi
