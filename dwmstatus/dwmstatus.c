@@ -19,16 +19,16 @@
 
 /* Appearance: change these without touching module code. */
 #define SEPARATOR " | "
-#define ICON_VOLUME "🔊"
-#define ICON_MUTED "🔇"
+#define ICON_VOLUME "󰕾"
+#define ICON_MUTED "󰝟"
 #define ICON_BRIGHTNESS "󰃠"
-#define ICON_WIFI "📶"
+#define ICON_WIFI "󰖩"
 #define ICON_BLUETOOTH ""
 #define ICON_CPU ""
 #define ICON_RAM "󰍛"
 #define ICON_DISK "󰋊"
-#define ICON_BATTERY "🔋"
-#define ICON_CHARGING "⚡"
+#define ICON_BATTERY "󰁹"
+#define ICON_CHARGING ""
 #define ICON_TIME "󰥔"
 #define COLOR_WHITE "#ffffff"
 #define COLOR_GREY "#777777"
@@ -436,7 +436,7 @@ refresh_wifi(void)
 	percent = quality < 0.0 ? 0 : (long)(quality * 100.0 / 70.0 + 0.5);
 	if (percent > 100)
 		percent = 100;
-	(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s %.20s %ld%%^d^",
+	(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s %.12s %ld%%^d^",
 	               COLOR_WHITE, ICON_WIFI, ssid, percent);
 }
 
