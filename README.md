@@ -2,6 +2,8 @@
 
 Personal DWM build for Void Linux and X11.
 
+The bar uses five numbered workspaces (`1`–`5`).
+
 - `dwm/` contains the window manager, bar, Eww, and Rofi sources based on
   ChadWM.
 - `dwmstatus/` contains the Xlib-only status generator and `bar-power`.
