@@ -1511,8 +1511,6 @@ void drawbar(Monitor *m) {
   }else{
     mw = m->ww - borderpx * 2;
   }
-  int boxs = drw->fonts->h / 9;
-  int boxw = drw->fonts->h / 6 + 2;
   unsigned int i, occ = 0, urg = 0;
   Client *c;
 
@@ -1559,19 +1557,11 @@ void drawbar(Monitor *m) {
   }
   w = floatbar?mw + m->gappov * 2 - sw - stw - x:mw - sw - stw - x;
   if (w > bh_n) {
-    if (m->sel) {
-      drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
-     	drw_text(drw, x, 0, w, bh, lrpad / 2 + (m->sel->icon ? m->sel->icw + ICONSPACING : 0), m->sel->name, 0);
-			if (m->sel->icon) drw_pic(drw, x + lrpad / 2, (bh - m->sel->ich) / 2, m->sel->icw, m->sel->ich, m->sel->icon);
-      if (m->sel->isfloating)
-        drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
-    } else {
-      drw_setscheme(drw, scheme[SchemeNorm]);
-      if(floatbar){
-        drw_rect(drw, x, y, w - m->gappov * 2, bh_n, 1, 1);
-      }else{
-        drw_rect(drw, x, y, w, bh_n, 1, 1);
-      }
+    drw_setscheme(drw, scheme[SchemeNorm]);
+    if(floatbar){
+      drw_rect(drw, x, y, w - m->gappov * 2, bh_n, 1, 1);
+    }else{
+      drw_rect(drw, x, y, w, bh_n, 1, 1);
     }
   }
   if (m == selmon && centered_status[0]) {
