@@ -19,6 +19,27 @@ The configured shortcuts are:
 The final clock module is centered. Scrolling over the volume or brightness
 module adjusts that value and immediately refreshes `dwmstatus`.
 
+## Network menus
+
+Click the Wi-Fi or Bluetooth module in the status bar to open its terminal
+manager in `st`. The Python scripts are in `dwm/scripts/` and use only the
+standard library:
+
+- `wifi-cli.py` shows available networks in one table and uses NetworkManager's
+  `nmcli` to control power and connect with an inline password prompt.
+- `bluetooth-cli.py` shows known devices in one table and uses BlueZ's
+  `bluetoothctl` to control power, scan, pair, trust, and connect after an
+  inline confirmation prompt.
+
+Both tables use `Up`/`Down` (or `J`/`K` and the mouse wheel) to select a row,
+`Space` to connect, `/` to search and jump to an SSID or device name, `P` to
+toggle radio power, `R` to refresh or scan, and `Q` to close the terminal.
+Actions and prompts stay in the same `st` window.
+
+They can also be used directly with `status`, `on`, `off`, or `toggle`, for
+example `wifi-cli.py toggle`. Runtime dependencies are Python 3,
+NetworkManager, and BlueZ; no third-party Python packages are required.
+
 See `dwmstatus/README.md` for status, power-menu, build, and signal-refresh
 instructions.
 

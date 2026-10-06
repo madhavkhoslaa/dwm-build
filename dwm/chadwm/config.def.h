@@ -34,8 +34,8 @@ static const char *downvol[] = { "/bin/sh", "-c", "wpctl set-volume @DEFAULT_AUD
 static const char *mutevol[] = { "/bin/sh", "-c", "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; pkill -RTMIN+1 dwmstatus", NULL };
 static const char *light_up[] = { "/home/vroomer/.config/chadwm/scripts/bar-brightness", "up", NULL };
 static const char *light_down[] = { "/home/vroomer/.config/chadwm/scripts/bar-brightness", "down", NULL };
-static const char *wifi_menu[] = { "st", "-c", "status-popup", "-e", "nmtui", NULL };
-static const char *bluetooth_menu[] = { "st", "-c", "status-popup", "-e", "bluetoothctl", NULL };
+static const char *wifi_menu[] = { "st", "-c", "status-popup", "-e", "/bin/sh", "-c", "exec \"$HOME/.config/chadwm/scripts/wifi-cli.py\"", NULL };
+static const char *bluetooth_menu[] = { "st", "-c", "status-popup", "-e", "/bin/sh", "-c", "exec \"$HOME/.config/chadwm/scripts/bluetooth-cli.py\"", NULL };
 static const int new_window_attach_on_end = 0; /*  1 means the new window will attach on the end; 0 means the new window will attach on the front,default is front */
 #define ICONSIZE 19   /* icon size */
 #define ICONSPACING 8 /* space between icon and title */

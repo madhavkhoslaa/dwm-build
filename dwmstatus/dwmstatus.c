@@ -52,7 +52,8 @@ enum audio_backend {
 enum refresh_flag {
 	REFRESH_VOLUME = 1,
 	REFRESH_BRIGHTNESS = 2,
-	REFRESH_THEME = 4
+	REFRESH_THEME = 4,
+	REFRESH_NETWORK = 8
 };
 
 static Display *dpy;
@@ -103,6 +104,8 @@ handle_signal(int signo)
 		refresh_flags |= REFRESH_VOLUME;
 	else if (signo == SIGRTMIN + 2)
 		refresh_flags |= REFRESH_BRIGHTNESS;
+	else if (signo == SIGRTMIN + 3)
+		refresh_flags |= REFRESH_NETWORK;
 	else if (signo == SIGHUP)
 		refresh_flags |= REFRESH_THEME;
 }
@@ -147,9 +150,6 @@ load_theme_colors(void)
 		(void)copy_palette_color(theme_orange, read_buffer, 3);
 		(void)copy_palette_color(theme_white, read_buffer, 7);
 		(void)copy_palette_color(theme_grey, read_buffer, 8);
-		if (bluetooth_text[0])
-			(void)snprintf(bluetooth_text, sizeof(bluetooth_text),
-			               "^c%s^%s^d^", COLOR_WHITE, ICON_BLUETOOTH);
 	}
 	close(fd);
 }
@@ -361,23 +361,20 @@ discover_wifi(void)
 }
 
 static void
-discover_bluetooth(void)
+refresh_bluetooth(void)
 {
-	DIR *dir;
-	struct dirent *entry;
+	const char *output;
 
 	bluetooth_text[0] = '\0';
-	dir = opendir("/sys/class/bluetooth");
-	if (!dir)
+	output = run_command("bluetoothctl show 2>/dev/null");
+	if (!output || !output[0])
 		return;
-	while ((entry = readdir(dir))) {
-		if (strncmp(entry->d_name, "hci", 3) == 0) {
-			(void)snprintf(bluetooth_text, sizeof(bluetooth_text),
-			               "^c%s^%s^d^", COLOR_WHITE, ICON_BLUETOOTH);
-			break;
-		}
-	}
-	closedir(dir);
+	if (strstr(output, "Powered: yes"))
+		(void)snprintf(bluetooth_text, sizeof(bluetooth_text),
+		               "^c%s^%s^d^", COLOR_GREEN, ICON_BLUETOOTH);
+	else
+		(void)snprintf(bluetooth_text, sizeof(bluetooth_text),
+		               "^c%s^%s off^d^", COLOR_RED, ICON_BLUETOOTH);
 }
 
 static void
@@ -468,7 +465,7 @@ refresh_wifi(void)
 		return;
 	if (!(flags & IFF_UP)) {
 		(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s off^d^",
-		               COLOR_BLACK, ICON_WIFI);
+		               COLOR_RED, ICON_WIFI);
 		return;
 	}
 	if (read_fd(wireless_fd, read_buffer, sizeof(read_buffer)) >= 0) {
@@ -488,7 +485,7 @@ refresh_wifi(void)
 	if (percent > 100)
 		percent = 100;
 	(void)snprintf(wifi_text, sizeof(wifi_text), "^c%s^%s %ld%%^d^",
-	               COLOR_WHITE, ICON_WIFI, percent);
+	               COLOR_GREEN, ICON_WIFI, percent);
 }
 
 static void
@@ -667,21 +664,23 @@ main(void)
 	    sigaction(SIGTERM, &action, NULL) < 0 ||
 	    sigaction(SIGHUP, &action, NULL) < 0 ||
 	    sigaction(SIGRTMIN + 1, &action, NULL) < 0 ||
-	    sigaction(SIGRTMIN + 2, &action, NULL) < 0) {
+	    sigaction(SIGRTMIN + 2, &action, NULL) < 0 ||
+	    sigaction(SIGRTMIN + 3, &action, NULL) < 0) {
 		perror("sigaction");
 		return 1;
 	}
 	sigemptyset(&refresh_mask);
 	sigaddset(&refresh_mask, SIGRTMIN + 1);
 	sigaddset(&refresh_mask, SIGRTMIN + 2);
+	sigaddset(&refresh_mask, SIGRTMIN + 3);
 	sigaddset(&refresh_mask, SIGHUP);
 
 	detect_audio();
 	discover_brightness();
 	discover_battery();
 	discover_wifi();
-	discover_bluetooth();
 	load_theme_colors();
+	refresh_bluetooth();
 	stat_fd = open("/proc/stat", O_RDONLY | O_CLOEXEC);
 	meminfo_fd = open("/proc/meminfo", O_RDONLY | O_CLOEXEC);
 	wireless_fd = open("/proc/net/wireless", O_RDONLY | O_CLOEXEC);
@@ -702,7 +701,13 @@ main(void)
 		if (flags & REFRESH_THEME) {
 			load_theme_colors();
 			refresh_wifi();
+			refresh_bluetooth();
 			refresh_battery();
+		}
+		if (flags & REFRESH_NETWORK) {
+			refresh_wifi();
+			refresh_bluetooth();
+			last_wifi = now.tv_sec;
 		}
 		if ((flags & REFRESH_VOLUME) || now.tv_sec - last_volume >= 30) {
 			refresh_volume();
@@ -715,6 +720,7 @@ main(void)
 		}
 		if (now.tv_sec - last_wifi >= 10) {
 			refresh_wifi();
+			refresh_bluetooth();
 			last_wifi = now.tv_sec;
 		}
 		if (now.tv_sec - last_cpu >= 1) {

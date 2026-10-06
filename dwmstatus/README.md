@@ -69,11 +69,15 @@ root window name.
 Send `SIGHUP` to reload semantic colors from `~/.cache/wal/colors` without
 restarting the process.
 
+Send `SIGRTMIN+3` to refresh Wi-Fi and Bluetooth immediately. The included
+terminal network managers send this signal after power or connection changes.
+
 In the accompanying DWM build, the final time module is drawn in the center.
 The volume and brightness modules contain invisible status markers used by
 DWM to provide module-specific mouse-wheel controls.
 
-Click the Wi-Fi module to open `nmtui` in st. Click the Bluetooth icon to open
-`bluetoothctl` in st. Wi-Fi is white while connected, grey while disconnected,
-and black while its interface is off. Battery color is green above 70%, orange
-from 30–70%, and red below 30%; charging adds a bolt.
+Click the Wi-Fi or Bluetooth module to open its table-based manager in st.
+Wi-Fi is green while connected, grey while disconnected, and red while its
+interface is off. Bluetooth is green while powered and red with an `off`
+label while powered down. Battery color is green above 70%, orange from
+30–70%, and red below 30%; charging adds a bolt.
