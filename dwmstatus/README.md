@@ -55,9 +55,9 @@ then request an immediate status refresh:
 { 0, XF86XK_AudioMute, spawn,
   SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; pkill -RTMIN+1 dwmstatus") },
 { 0, XF86XK_MonBrightnessUp, spawn,
-  SHCMD("xbacklight -inc 5; pkill -RTMIN+2 dwmstatus") },
+  SHCMD("$HOME/.config/chadwm/scripts/bar-brightness up") },
 { 0, XF86XK_MonBrightnessDown, spawn,
-  SHCMD("xbacklight -dec 5; pkill -RTMIN+2 dwmstatus") },
+  SHCMD("$HOME/.config/chadwm/scripts/bar-brightness down") },
 { MODKEY|ShiftMask, XK_p, spawn, SHCMD("bar-power") },
 { MODKEY, XK_x, spawn, SHCMD("slock") },
 ```
